@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minecraft レシピジェネレーター</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+
+        .form-section:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .recipe-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin: 20px 0;
+            max-width: 300px;
+        }
+
+        .recipe-slot {
+            width: 80px;
+            height: 80px;
+            border: 3px solid #8B4513;
+            border-radius: 8px;
+            background: #D2B48C;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .recipe-slot:hover {
+            background: #F4A460;
+            transform: scale(1.05);
+        }
+
+        .recipe-slot.filled {
+            background: #90EE90;
+            border-color: #228B22;
+        }
+
+        .recipe-slot input {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: transparent;
+            text-align: center;
+            font-size: 12px;
+            padding: 4px;
+        }
+
+        .result-section {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .arrow {
+            font-size: 2em;
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .result-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .result-slot {
+            width: 100px;
+            height: 100px;
+            border: 3px solid #FFD700;
+            border-radius: 12px;
+            background: #FFFACD;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+
+        button {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(45deg, #f093fb, #f5576c);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(245, 87, 108, 0.3);
+        }
+
+        .btn-success {
+            background: linear-gradient(45deg, #4facfe, #00f2fe);
+            color: white;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(79, 172, 254, 0.3);
+        }
+
+        .output {
+            background: #212529;
+            color: #00ff00;
+            padding: 20px;
+            border-radius: 12px;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            margin-top: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+            border: 2px solid #495057;
+        }
+
+        .recipe-type-selector {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .recipe-type-btn {
+            padding: 10px 20px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .recipe-type-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .shapeless-ingredients {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .ingredient-input {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 8px;
+            border: 2px solid #dee2e6;
+        }
+
+        .ingredient-input input {
+            width: 150px;
+            margin-bottom: 0;
+        }
+
+        .remove-ingredient {
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            font-size: 18px;
+            line-height: 1;
+        }
+
+        .add-ingredient {
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 20px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .pulse {
+            animation: pulse 0.5s ease-in-out;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 Minecraft レシピジェネレーター</h1>
+        
+        <div class="form-section">
+            <h3>基本設定</h3>
+            <div class="form-group">
+                <label for="recipeId">レシピID:</label>
+                <input type="text" id="recipeId" placeholder="例: my_custom_sword">
+            </div>
+            <div class="form-group">
+                <label for="description">説明:</label>
+                <input type="text" id="description" placeholder="例: カスタム剣のレシピ">
+            </div>
+            <div class="form-group">
+                <small style="color: #6c757d; font-style: italic;">
+                    💡 <strong>アイテムID入力のヒント:</strong><br>
+                    • バニラアイテム: <code>iron_ingot</code>, <code>stick</code>, <code>diamond</code><br>
+                    • カスタムアイテム: <code>your_addon:custom_item</code><br>
+                    • 「:」が含まれていない場合は自動で「minecraft:」が追加されます
+                </small>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h3>レシピタイプ</h3>
+            <div class="recipe-type-selector">
+                <button class="recipe-type-btn active" onclick="setRecipeType('shaped')">定形レシピ</button>
+                <button class="recipe-type-btn" onclick="setRecipeType('shapeless')">不定形レシピ</button>
+            </div>
+
+            <div id="shapedRecipe" class="recipe-container">
+                <h4>クラフトグリッド (3x3)</h4>
+                <div class="recipe-grid" id="recipeGrid">
+                    <div class="recipe-slot" onclick="selectSlot(0)"><input type="text" placeholder="空" onchange="updateSlot(0, this.value)"></div>
+                    <div class="recipe-slot" onclick="selectSlot(1)"><input type="text" placeholder="空" onchange="updateSlot(1, this.value)"></div>
+                    <div class="recipe-slot" onclick="selectSlot(2)"><input type="text" placeholder="空" onchange="updateSlot(2, this.value)"></div>
+                    <div class="recipe-slot" onclick="selectSlot(3)"><input type="text" placeholder="空" onchange="updateSlot(3, this.value)"></div>
+                    <div class="recipe-slot" onclick="selectSlot(4)"><input type="text" placeholder="空" onchange="updateSlot(4, this.value)"></div>
+                    <div class="recipe-slot" onclick="selectSlot(5)"><input type="text" placeholder="空" onchange="updateSlot(5, this.value)"></div>
+                    <div class="recipe-slot" onclick="selectSlot(6)"><input type="text" placeholder="空" onchange="updateSlot(6, this.value)"></div>
+                    <div class="recipe-slot" onclick="selectSlot(7)"><input type="text" placeholder="空" onchange="updateSlot(7, this.value)"></div>
+                    <div class="recipe-slot" onclick="selectSlot(8)"><input type="text" placeholder="空" onchange="updateSlot(8, this.value)"></div>
+                </div>
+            </div>
+
+            <div id="shapelessRecipe" class="recipe-container" style="display: none;">
+                <h4>材料リスト</h4>
+                <div class="shapeless-ingredients" id="shapelessIngredients">
+                    <div class="ingredient-input">
+                        <input type="text" placeholder="アイテム名" onchange="updateShapelessIngredient(0, this.value)">
+                        <input type="number" value="1" min="1" max="9" placeholder="数量" onchange="updateShapelessCount(0, this.value)">
+                        <button class="remove-ingredient" onclick="removeShapelessIngredient(0)">×</button>
+                    </div>
+                </div>
+                <button class="add-ingredient" onclick="addShapelessIngredient()">+ 材料を追加</button>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h3>結果アイテム</h3>
+            <div class="result-section">
+                <div class="recipe-grid">
+                    <div style="grid-column: 2;"></div>
+                </div>
+                <div class="arrow">→</div>
+                <div class="result-item">
+                    <div class="result-slot" id="resultDisplay">結果</div>
+                    <div>
+                        <input type="text" id="resultItem" placeholder="結果アイテム名" style="width: 200px; margin-bottom: 10px;" onchange="updateResult()">
+                        <input type="number" id="resultCount" value="1" min="1" max="64" placeholder="数量" style="width: 100px;" onchange="updateResult()">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="buttons">
+            <button class="btn-primary" onclick="generateRecipe()">📝 レシピ生成</button>
+            <button class="btn-secondary" onclick="clearAll()">🗑️ クリア</button>
+            <button class="btn-success" onclick="downloadRecipe()">💾 ダウンロード</button>
+        </div>
+
+        <div id="output" class="output" style="display: none;"></div>
+    </div>
+
+    <script>
+        let currentRecipeType = 'shaped';
+        let recipeData = {
+            shaped: Array(9).fill(''),
+            shapeless: [{item: '', count: 1}],
+            result: {item: '', count: 1}
+        };
+
+        function setRecipeType(type) {
+            currentRecipeType = type;
+            document.querySelectorAll('.recipe-type-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            if (type === 'shaped') {
+                document.getElementById('shapedRecipe').style.display = 'block';
+                document.getElementById('shapelessRecipe').style.display = 'none';
+            } else {
+                document.getElementById('shapedRecipe').style.display = 'none';
+                document.getElementById('shapelessRecipe').style.display = 'block';
+            }
+        }
+
+        function selectSlot(index) {
+            const slot = document.querySelectorAll('.recipe-slot')[index];
+            slot.classList.add('pulse');
+            setTimeout(() => slot.classList.remove('pulse'), 500);
+        }
+
+        function updateSlot(index, value) {
+            recipeData.shaped[index] = value;
+            const slot = document.querySelectorAll('.recipe-slot')[index];
+            if (value.trim() !== '') {
+                slot.classList.add('filled');
+            } else {
+                slot.classList.remove('filled');
+            }
+        }
+
+        function updateShapelessIngredient(index, value) {
+            if (!recipeData.shapeless[index]) {
+                recipeData.shapeless[index] = {item: '', count: 1};
+            }
+            recipeData.shapeless[index].item = value;
+        }
+
+        function updateShapelessCount(index, count) {
+            if (!recipeData.shapeless[index]) {
+                recipeData.shapeless[index] = {item: '', count: 1};
+            }
+            recipeData.shapeless[index].count = parseInt(count) || 1;
+        }
+
+        function addShapelessIngredient() {
+            recipeData.shapeless.push({item: '', count: 1});
+            const container = document.getElementById('shapelessIngredients');
+            const index = recipeData.shapeless.length - 1;
+            
+            const ingredientDiv = document.createElement('div');
+            ingredientDiv.className = 'ingredient-input';
+            ingredientDiv.innerHTML = `
+                <input type="text" placeholder="アイテム名" onchange="updateShapelessIngredient(${index}, this.value)">
+                <input type="number" value="1" min="1" max="9" placeholder="数量" onchange="updateShapelessCount(${index}, this.value)">
+                <button class="remove-ingredient" onclick="removeShapelessIngredient(${index})">×</button>
+            `;
+            container.appendChild(ingredientDiv);
+        }
+
+        function removeShapelessIngredient(index) {
+            recipeData.shapeless.splice(index, 1);
+            refreshShapelessIngredients();
+        }
+
+        function refreshShapelessIngredients() {
+            const container = document.getElementById('shapelessIngredients');
+            container.innerHTML = '';
+            
+            recipeData.shapeless.forEach((ingredient, index) => {
+                const ingredientDiv = document.createElement('div');
+                ingredientDiv.className = 'ingredient-input';
+                ingredientDiv.innerHTML = `
+                    <input type="text" value="${ingredient.item}" placeholder="アイテム名" onchange="updateShapelessIngredient(${index}, this.value)">
+                    <input type="number" value="${ingredient.count}" min="1" max="9" placeholder="数量" onchange="updateShapelessCount(${index}, this.value)">
+                    <button class="remove-ingredient" onclick="removeShapelessIngredient(${index})">×</button>
+                `;
+                container.appendChild(ingredientDiv);
+            });
+        }
+
+        function updateResult() {
+            const item = document.getElementById('resultItem').value;
+            const count = parseInt(document.getElementById('resultCount').value) || 1;
+            
+            recipeData.result = {item, count};
+            
+            const display = document.getElementById('resultDisplay');
+            if (item) {
+                display.textContent = `${item} x${count}`;
+                display.style.background = '#90EE90';
+                display.style.borderColor = '#228B22';
+            } else {
+                display.textContent = '結果';
+                display.style.background = '#FFFACD';
+                display.style.borderColor = '#FFD700';
+            }
+        }
+
+        function generateRecipe() {
+            const recipeId = document.getElementById('recipeId').value || 'custom_recipe';
+            const description = document.getElementById('description').value || 'Custom recipe';
+            
+            let recipe;
+            
+            if (currentRecipeType === 'shaped') {
+                const pattern = [];
+                const keys = {};
+                let keyChar = 'A';
+                
+                // 3x3グリッドをパターンに変換
+                for (let i = 0; i < 3; i++) {
+                    let row = '';
+                    for (let j = 0; j < 3; j++) {
+                        const item = recipeData.shaped[i * 3 + j];
+                        if (item.trim() !== '') {
+                            if (!keys[item]) {
+                                keys[item] = keyChar;
+                                keyChar = String.fromCharCode(keyChar.charCodeAt(0) + 1);
+                            }
+                            row += keys[item];
+                        } else {
+                            row += ' ';
+                        }
+                    }
+                    pattern.push(row);
+                }
+                
+                // 空行を削除
+                while (pattern.length > 0 && pattern[pattern.length - 1].trim() === '') {
+                    pattern.pop();
+                }
+                while (pattern.length > 0 && pattern[0].trim() === '') {
+                    pattern.shift();
+                }
+                
+                // キーマップを作成
+                const keyMap = {};
+                Object.entries(keys).forEach(([item, key]) => {
+                    keyMap[key] = {
+                        item: item.includes(':') ? item : `minecraft:${item}`
+                    };
+                });
+                
+                recipe = {
+                    format_version: "1.20.10",
+                    "minecraft:recipe_shaped": {
+                        description: {
+                            identifier: `mypack:${recipeId}`
+                        },
+                        tags: ["crafting_table"],
+                        pattern: pattern,
+                        key: keyMap,
+                        result: {
+                            item: recipeData.result.item.includes(':') ? recipeData.result.item : `minecraft:${recipeData.result.item}`,
+                            count: recipeData.result.count
+                        }
+                    }
+                };
+                
+            } else {
+                // 不定形レシピ
+                const ingredients = recipeData.shapeless
+                    .filter(ing => ing.item.trim() !== '')
+                    .map(ing => ({
+                        item: ing.item.includes(':') ? ing.item : `minecraft:${ing.item}`,
+                        count: ing.count
+                    }));
+                
+                recipe = {
+                    format_version: "1.20.10",
+                    "minecraft:recipe_shapeless": {
+                        description: {
+                            identifier: `mypack:${recipeId}`
+                        },
+                        tags: ["crafting_table"],
+                        ingredients: ingredients,
+                        result: {
+                            item: recipeData.result.item.includes(':') ? recipeData.result.item : `minecraft:${recipeData.result.item}`,
+                            count: recipeData.result.count
+                        }
+                    }
+                };
+            }
+            
+            const output = document.getElementById('output');
+            output.textContent = JSON.stringify(recipe, null, 2);
+            output.style.display = 'block';
+            
+            // スムーズスクロール
+            output.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function clearAll() {
+            document.getElementById('recipeId').value = '';
+            document.getElementById('description').value = '';
+            document.getElementById('resultItem').value = '';
+            document.getElementById('resultCount').value = '1';
+            
+            recipeData = {
+                shaped: Array(9).fill(''),
+                shapeless: [{item: '', count: 1}],
+                result: {item: '', count: 1}
+            };
+            
+            // グリッドをクリア
+            document.querySelectorAll('.recipe-slot input').forEach(input => {
+                input.value = '';
+                input.placeholder = '空';
+            });
+            document.querySelectorAll('.recipe-slot').forEach(slot => {
+                slot.classList.remove('filled');
+            });
+            
+            // 結果表示をリセット
+            updateResult();
+            
+            // 不定形材料をリセット
+            refreshShapelessIngredients();
+            
+            document.getElementById('output').style.display = 'none';
+        }
+
+        function downloadRecipe() {
+            const output = document.getElementById('output');
+            if (output.style.display === 'none' || !output.textContent.trim()) {
+                alert('まずレシピを生成してください！');
+                return;
+            }
+            
+            const recipeId = document.getElementById('recipeId').value || 'custom_recipe';
+            const blob = new Blob([output.textContent], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${recipeId}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // 初期化
+        updateResult();
+    </script>
+</body>
+</html>
