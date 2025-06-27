@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minecraft アドオン アイテム定義生成ツール</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .form-section {
+            padding: 40px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 1.1em;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #4CAF50;
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+            transform: scale(1.2);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1em;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #2196F3, #1976D2);
+            box-shadow: 0 4px 15px rgba(33, 150, 243, 0.3);
+        }
+
+        .btn-secondary:hover {
+            box-shadow: 0 6px 20px rgba(33, 150, 243, 0.4);
+        }
+
+        .preview {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .preview h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .preview pre {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .error {
+            color: #dc3545;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        .success {
+            color: #28a745;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .container {
+                margin: 10px;
+            }
+            
+            .form-section {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚡ Minecraft アイテム生成ツール</h1>
+            <p>アドオン用のアイテム定義を簡単に作成・ダウンロード</p>
+        </div>
+
+        <div class="form-section">
+            <form id="itemForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="namespace">名前空間 *</label>
+                        <input type="text" id="namespace" name="namespace" required placeholder="例: mymod">
+                        <div class="error" id="namespaceError"></div>
+                    </div>
+                    <div class="form-group">
+                        <label for="itemId">アイテムID *</label>
+                        <input type="text" id="itemId" name="itemId" required placeholder="例: magic_sword">
+                        <div class="error" id="itemIdError"></div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="displayName">表示名</label>
+                    <input type="text" id="displayName" name="displayName" placeholder="例: マジックソード">
+                </div>
+
+                <div class="form-group">
+                    <label for="description">説明</label>
+                    <textarea id="description" name="description" placeholder="アイテムの説明を入力..."></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="maxStackSize">最大スタック数</label>
+                        <input type="number" id="maxStackSize" name="maxStackSize" min="1" max="64" value="64">
+                    </div>
+                    <div class="form-group">
+                        <label for="category">カテゴリ</label>
+                        <select id="category" name="category">
+                            <option value="items">アイテム</option>
+                            <option value="construction">建築</option>
+                            <option value="equipment">装備</option>
+                            <option value="nature">自然</option>
+                            <option value="none">なし</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="rarity">レア度</label>
+                        <select id="rarity" name="rarity">
+                            <option value="common">コモン</option>
+                            <option value="uncommon">アンコモン</option>
+                            <option value="rare">レア</option>
+                            <option value="epic">エピック</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="texture">テクスチャファイル名</label>
+                        <input type="text" id="texture" name="texture" placeholder="例: magic_sword">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>オプション</label>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="glint" name="glint">
+                        <label for="glint">エンチャント光沢</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="handEquipped" name="handEquipped">
+                        <label for="handEquipped">手に装備可能</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="allowOffhand" name="allowOffhand">
+                        <label for="allowOffhand">オフハンド使用可能</label>
+                    </div>
+                </div>
+
+                <div style="margin-top: 30px;">
+                    <button type="button" class="btn" onclick="generateItem()">🎯 アイテム生成</button>
+                    <button type="button" class="btn btn-secondary" onclick="downloadItem()" id="downloadBtn" disabled>💾 ダウンロード</button>
+                    <button type="button" class="btn btn-secondary" onclick="clearForm()">🔄 クリア</button>
+                </div>
+            </form>
+
+            <div class="preview" id="preview" style="display: none;">
+                <h3>📋 生成されたアイテム定義</h3>
+                <pre id="jsonOutput"></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let generatedJson = null;
+        let fileName = null;
+
+        function validateInput(value, pattern, errorElementId, errorMessage) {
+            const errorElement = document.getElementById(errorElementId);
+            if (!pattern.test(value)) {
+                errorElement.textContent = errorMessage;
+                return false;
+            } else {
+                errorElement.textContent = '';
+                return true;
+            }
+        }
+
+        function generateItem() {
+            const form = document.getElementById('itemForm');
+            const formData = new FormData(form);
+            
+            const namespace = formData.get('namespace').trim();
+            const itemId = formData.get('itemId').trim();
+            
+            // バリデーション
+            const namespacePattern = /^[a-z][a-z0-9_]*$/;
+            const itemIdPattern = /^[a-z][a-z0-9_]*$/;
+            
+            let isValid = true;
+            
+            if (!validateInput(namespace, namespacePattern, 'namespaceError', '名前空間は小文字、数字、アンダースコアのみ使用可能で、文字で始まる必要があります')) {
+                isValid = false;
+            }
+            
+            if (!validateInput(itemId, itemIdPattern, 'itemIdError', 'アイテムIDは小文字、数字、アンダースコアのみ使用可能で、文字で始まる必要があります')) {
+                isValid = false;
+            }
+            
+            if (!isValid) return;
+
+            // アイテム定義の生成
+            const itemDefinition = {
+                "format_version": "1.20.50",
+                "minecraft:item": {
+                    "description": {
+                        "identifier": `${namespace}:${itemId}`,
+                        "menu_category": {
+                            "category": formData.get('category')
+                        }
+                    },
+                    "components": {}
+                }
+            };
+
+            // 表示名の設定
+            const displayName = formData.get('displayName').trim();
+            if (displayName) {
+                itemDefinition["minecraft:item"]["components"]["minecraft:display_name"] = {
+                    "value": displayName
+                };
+            }
+
+            // 最大スタック数の設定
+            const maxStackSize = parseInt(formData.get('maxStackSize'));
+            if (maxStackSize && maxStackSize !== 64) {
+                itemDefinition["minecraft:item"]["components"]["minecraft:max_stack_size"] = maxStackSize;
+            }
+
+            // レア度の設定
+            const rarity = formData.get('rarity');
+            if (rarity !== 'common') {
+                itemDefinition["minecraft:item"]["components"]["minecraft:rarity"] = rarity;
+            }
+
+            // アイコン/テクスチャの設定
+            const texture = formData.get('texture').trim();
+            if (texture) {
+                itemDefinition["minecraft:item"]["components"]["minecraft:icon"] = texture;
+            } else {
+                itemDefinition["minecraft:item"]["components"]["minecraft:icon"] = itemId;
+            }
+
+            // エンチャント光沢
+            if (formData.get('glint')) {
+                itemDefinition["minecraft:item"]["components"]["minecraft:glint"] = true;
+            }
+
+            // 手に装備可能
+            if (formData.get('handEquipped')) {
+                itemDefinition["minecraft:item"]["components"]["minecraft:hand_equipped"] = true;
+            }
+
+            // オフハンド使用可能
+            if (formData.get('allowOffhand')) {
+                itemDefinition["minecraft:item"]["components"]["minecraft:allow_off_hand"] = true;
+            }
+
+            // 説明の設定
+            const description = formData.get('description').trim();
+            if (description) {
+                itemDefinition["minecraft:item"]["components"]["minecraft:hover_text_color"] = "white";
+                // 説明はlang fileで設定することを推奨
+            }
+
+            generatedJson = JSON.stringify(itemDefinition, null, 2);
+            fileName = `${itemId}.json`;
+
+            // プレビュー表示
+            document.getElementById('jsonOutput').textContent = generatedJson;
+            document.getElementById('preview').style.display = 'block';
+            document.getElementById('downloadBtn').disabled = false;
+
+            // スムーズスクロール
+            document.getElementById('preview').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function downloadItem() {
+            if (!generatedJson || !fileName) {
+                alert('まずアイテムを生成してください');
+                return;
+            }
+
+            const blob = new Blob([generatedJson], { type: 'application/json' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }
+
+        function clearForm() {
+            document.getElementById('itemForm').reset();
+            document.getElementById('preview').style.display = 'none';
+            document.getElementById('downloadBtn').disabled = true;
+            document.getElementById('namespaceError').textContent = '';
+            document.getElementById('itemIdError').textContent = '';
+            generatedJson = null;
+            fileName = null;
+        }
+
+        // リアルタイムバリデーション
+        document.getElementById('namespace').addEventListener('input', function() {
+            const value = this.value.trim();
+            if (value) {
+                const pattern = /^[a-z][a-z0-9_]*$/;
+                validateInput(value, pattern, 'namespaceError', '名前空間は小文字、数字、アンダースコアのみ使用可能で、文字で始まる必要があります');
+            } else {
+                document.getElementById('namespaceError').textContent = '';
+            }
+        });
+
+        document.getElementById('itemId').addEventListener('input', function() {
+            const value = this.value.trim();
+            if (value) {
+                const pattern = /^[a-z][a-z0-9_]*$/;
+                validateInput(value, pattern, 'itemIdError', 'アイテムIDは小文字、数字、アンダースコアのみ使用可能で、文字で始まる必要があります');
+            } else {
+                document.getElementById('itemIdError').textContent = '';
+            }
+        });
+    </script>
+</body>
+</html>
