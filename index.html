@@ -290,8 +290,43 @@
             animation: pulse 0.5s ease-in-out;
         }
     </style>
+    <link rel="stylesheet" href="minecraft-nav.css">
 </head>
 <body>
+    <nav class="minecraft-nav">
+    <div class="nav-header">
+        <h2 class="nav-title">
+            <span class="nav-icon">⚒️</span>
+            Minecraft アドオン ジェネレーター
+        </h2>
+    </div>
+    <ul class="nav-links">
+        <li>
+            <a href="index.html" class="nav-link" data-page="recipe">
+                <span class="nav-icon">📝</span>
+                レシピ生成機
+            </a>
+        </li>
+        <li>
+            <a href="item.html" class="nav-link" data-page="item">
+                <span class="nav-icon">💎</span>
+                アイテム定義生成機
+            </a>
+        </li>
+        <li>
+            <a href="block.html" class="nav-link" data-page="block">
+                <span class="nav-icon">🧱</span>
+                ブロック定義生成機
+            </a>
+        </li>
+        <li>
+            <a href="furnace.html" class="nav-link" data-page="furnace">
+                <span class="nav-icon">🔥</span>
+                かまどレシピ生成機
+            </a>
+        </li>
+    </ul>
+</nav>
     <div class="container">
         <h1>🎮 Minecraft レシピジェネレーター</h1>
         
@@ -628,5 +663,6 @@
         // 初期化
         updateResult();
     </script>
+    <script src="script.js"></script>
 </body>
 </html>
