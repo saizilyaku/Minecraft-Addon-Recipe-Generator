@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minecraft 精錬レシピジェネレータ</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #34495e;
+            font-size: 1.1em;
+        }
+
+        input[type="text"], input[type="number"], select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e1e8ed;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        input[type="text"]:focus, input[type="number"]:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .checkbox-group {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            margin-top: 10px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            accent-color: #667eea;
+        }
+
+        .checkbox-item label {
+            margin: 0;
+            font-weight: normal;
+            cursor: pointer;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(-1px);
+        }
+
+        .btn-container {
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .preview {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 15px;
+            margin-top: 30px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .preview::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #667eea, #764ba2, #667eea);
+        }
+
+        .preview h3 {
+            color: #81c784;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            margin: 0;
+        }
+
+        .recipe-list {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+            border: 2px solid #e1e8ed;
+        }
+
+        .recipe-item {
+            background: white;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: transform 0.2s ease;
+        }
+
+        .recipe-item:hover {
+            transform: translateX(5px);
+        }
+
+        .recipe-info {
+            flex: 1;
+        }
+
+        .recipe-title {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .recipe-details {
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+
+        .recipe-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-small {
+            padding: 8px 16px;
+            font-size: 14px;
+            border-radius: 20px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-download {
+            background: #27ae60;
+            color: white;
+        }
+
+        .btn-download:hover {
+            background: #229954;
+            transform: translateY(-2px);
+        }
+
+        .btn-remove {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-remove:hover {
+            background: #c0392b;
+            transform: translateY(-2px);
+        }
+
+        .download-all {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .btn-download-all {
+            background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 20px rgba(39, 174, 96, 0.3);
+        }
+
+        .btn-download-all:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 25px rgba(39, 174, 96, 0.4);
+        }
+
+        .error {
+            color: #e74c3c;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        .success {
+            color: #27ae60;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .recipe-item {
+            animation: slideIn 0.3s ease;
+        }
+    </style>
+    <link rel="stylesheet" href="minecraft-nav.css">
+</head>
+<body>
+    <nav class="minecraft-nav">
+    <div class="nav-header">
+        <h2 class="nav-title">
+            <span class="nav-icon">⚒️</span>
+            Minecraft アドオン ジェネレーター
+        </h2>
+    </div>
+    <ul class="nav-links">
+        <li>
+            <a href="recipe-generator.html" class="nav-link" data-page="recipe">
+                <span class="nav-icon">📝</span>
+                レシピ生成機
+            </a>
+        </li>
+        <li>
+            <a href="item-generator.html" class="nav-link" data-page="item">
+                <span class="nav-icon">💎</span>
+                アイテム定義生成機
+            </a>
+        </li>
+        <li>
+            <a href="block-generator.html" class="nav-link" data-page="block">
+                <span class="nav-icon">🧱</span>
+                ブロック定義生成機
+            </a>
+        </li>
+        <li>
+            <a href="furnace-generator.html" class="nav-link" data-page="furnace">
+                <span class="nav-icon">🔥</span>
+                かまどレシピ生成機
+            </a>
+        </li>
+    </ul>
+</nav>
+    <div class="container">
+        <h1>🔥 Minecraft 精錬レシピジェネレータ</h1>
+        
+        <form id="recipeForm">
+            <div class="form-group">
+                <label for="namespace">名前空間:</label>
+                <input type="text" id="namespace" value="mypack" placeholder="例: mypack">
+                <div class="error" id="namespaceError"></div>
+            </div>
+
+            <div class="form-group">
+                <label for="recipeId">レシピID:</label>
+                <input type="text" id="recipeId" placeholder="例: copper_ingot_from_ore" required>
+                <div class="error" id="recipeIdError"></div>
+            </div>
+
+            <div class="form-group">
+                <label for="inputItem">入力アイテム:</label>
+                <input type="text" id="inputItem" placeholder="例: minecraft:copper_ore" required>
+            </div>
+
+            <div class="form-group">
+                <label for="outputItem">出力アイテム:</label>
+                <input type="text" id="outputItem" placeholder="例: minecraft:copper_ingot" required>
+            </div>
+
+            <div class="form-group">
+                <label for="experience">経験値:</label>
+                <input type="number" id="experience" value="0.1" step="0.1" min="0">
+            </div>
+
+            <div class="form-group">
+                <label for="cookingTime">精錬時間 (ticks):</label>
+                <input type="number" id="cookingTime" value="200" min="1">
+            </div>
+
+            <div class="form-group">
+                <label>精錬方法:</label>
+                <div class="checkbox-group">
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="furnace" checked>
+                        <label for="furnace">かまど</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="smoker">
+                        <label for="smoker">燻製器</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="blastFurnace">
+                        <label for="blastFurnace">溶鉱炉</label>
+                    </div>
+                </div>
+                <div class="error" id="methodError"></div>
+            </div>
+
+            <div class="btn-container">
+                <button type="submit" class="btn">レシピを追加</button>
+            </div>
+        </form>
+
+        <div id="recipeList" class="recipe-list" style="display: none;">
+            <h3>作成されたレシピ</h3>
+            <div id="recipes"></div>
+            <div class="download-all">
+                <button class="btn-download-all" onclick="downloadAllRecipes()">すべてのレシピをダウンロード (ZIP)</button>
+            </div>
+        </div>
+
+        <div id="preview" class="preview" style="display: none;">
+            <h3>プレビュー</h3>
+            <pre id="previewContent"></pre>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script>
+        let recipes = [];
+
+        function validateForm() {
+            let isValid = true;
+            
+            // Clear previous errors
+            document.querySelectorAll('.error').forEach(el => el.textContent = '');
+            
+            const namespace = document.getElementById('namespace').value.trim();
+            const recipeId = document.getElementById('recipeId').value.trim();
+            
+            // Validate namespace
+            if (!namespace.match(/^[a-z0-9_]+$/)) {
+                document.getElementById('namespaceError').textContent = '名前空間は小文字の英数字とアンダースコアのみ使用可能です';
+                isValid = false;
+            }
+            
+            // Validate recipe ID
+            if (!recipeId.match(/^[a-z0-9_]+$/)) {
+                document.getElementById('recipeIdError').textContent = 'レシピIDは小文字の英数字とアンダースコアのみ使用可能です';
+                isValid = false;
+            }
+            
+            // Check if at least one smelting method is selected
+            const furnace = document.getElementById('furnace').checked;
+            const smoker = document.getElementById('smoker').checked;
+            const blastFurnace = document.getElementById('blastFurnace').checked;
+            
+            if (!furnace && !smoker && !blastFurnace) {
+                document.getElementById('methodError').textContent = '少なくとも1つの精錬方法を選択してください';
+                isValid = false;
+            }
+            
+            return isValid;
+        }
+
+        function generateRecipe(data, type) {
+            const recipeKey = "minecraft:recipe_" + type;
+            const recipe = {
+                "format_version": "1.17.0"
+            };
+            
+            recipe[recipeKey] = {
+                "description": {
+                    "identifier": data.namespace + ":" + data.recipeId + "_" + type
+                },
+                "tags": ["furnace"],
+                "input": data.inputItem,
+                "output": data.outputItem,
+                "experience": parseFloat(data.experience),
+                "cooking_time": parseInt(data.cookingTime)
+            };
+            
+            return JSON.stringify(recipe, null, 2);
+        }
+
+        function addRecipe(data) {
+            const methods = [];
+            if (data.furnace) methods.push('furnace');
+            if (data.smoker) methods.push('smoker');
+            if (data.blastFurnace) methods.push('blast_furnace');
+            
+            const recipeData = {
+                id: data.recipeId,
+                namespace: data.namespace,
+                fullId: data.namespace + ":" + data.recipeId,
+                inputItem: data.inputItem,
+                outputItem: data.outputItem,
+                experience: data.experience,
+                cookingTime: data.cookingTime,
+                methods: methods,
+                files: {}
+            };
+            
+            // Generate recipe files for each method
+            methods.forEach(method => {
+                recipeData.files[method] = generateRecipe(data, method);
+            });
+            
+            recipes.push(recipeData);
+            renderRecipes();
+        }
+
+        function renderRecipes() {
+            const container = document.getElementById('recipes');
+            const listContainer = document.getElementById('recipeList');
+            
+            if (recipes.length === 0) {
+                listContainer.style.display = 'none';
+                return;
+            }
+            
+            listContainer.style.display = 'block';
+            
+            container.innerHTML = recipes.map(function(recipe, index) {
+                return '<div class="recipe-item">' +
+                    '<div class="recipe-info">' +
+                        '<div class="recipe-title">' + recipe.fullId + '</div>' +
+                        '<div class="recipe-details">' +
+                            recipe.inputItem + ' → ' + recipe.outputItem + ' | ' +
+                            '方法: ' + recipe.methods.join(', ') + ' | ' +
+                            '経験値: ' + recipe.experience + ' | ' +
+                            '時間: ' + recipe.cookingTime + 't' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="recipe-actions">' +
+                        '<button class="btn-small btn-download" onclick="downloadRecipe(' + index + ')">ダウンロード</button>' +
+                        '<button class="btn-small btn-remove" onclick="removeRecipe(' + index + ')">削除</button>' +
+                    '</div>' +
+                '</div>';
+            }).join('');
+        }
+
+        function downloadRecipe(index) {
+            const recipe = recipes[index];
+            const zip = new JSZip();
+            
+            Object.keys(recipe.files).forEach(function(method) {
+                const fileName = recipe.id + "_" + method + ".json";
+                zip.file(fileName, recipe.files[method]);
+            });
+            
+            zip.generateAsync({type: "blob"}).then(function(content) {
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(content);
+                link.download = `${recipe.id}_recipes.zip`;
+                link.click();
+            });
+        }
+
+        function removeRecipe(index) {
+            recipes.splice(index, 1);
+            renderRecipes();
+        }
+
+        function downloadAllRecipes() {
+            if (recipes.length === 0) return;
+            
+            const zip = new JSZip();
+            
+            recipes.forEach(function(recipe) {
+                Object.keys(recipe.files).forEach(function(method) {
+                    const fileName = recipe.id + "_" + method + ".json";
+                    zip.file(fileName, recipe.files[method]);
+                });
+            });
+            
+            zip.generateAsync({type: "blob"}).then(function(content) {
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(content);
+                link.download = `minecraft_smelting_recipes.zip`;
+                link.click();
+            });
+        }
+
+        function updatePreview() {
+            const data = {
+                namespace: document.getElementById('namespace').value,
+                recipeId: document.getElementById('recipeId').value,
+                inputItem: document.getElementById('inputItem').value,
+                outputItem: document.getElementById('outputItem').value,
+                experience: document.getElementById('experience').value,
+                cookingTime: document.getElementById('cookingTime').value,
+                furnace: document.getElementById('furnace').checked,
+                smoker: document.getElementById('smoker').checked,
+                blastFurnace: document.getElementById('blastFurnace').checked
+            };
+            
+            if (data.recipeId && data.inputItem && data.outputItem) {
+                let preview = '';
+                
+                if (data.furnace) {
+                    preview += '=== かまど用レシピ ===\n';
+                    preview += generateRecipe(data, 'furnace') + '\n\n';
+                }
+                
+                if (data.smoker) {
+                    preview += '=== 燻製器用レシピ ===\n';
+                    preview += generateRecipe(data, 'smoker') + '\n\n';
+                }
+                
+                if (data.blastFurnace) {
+                    preview += '=== 溶鉱炉用レシピ ===\n';
+                    preview += generateRecipe(data, 'blast_furnace') + '\n\n';
+                }
+                
+                document.getElementById('previewContent').textContent = preview;
+                document.getElementById('preview').style.display = 'block';
+            } else {
+                document.getElementById('preview').style.display = 'none';
+            }
+        }
+
+        document.getElementById('recipeForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            if (!validateForm()) {
+                return;
+            }
+            
+            const data = {
+                namespace: document.getElementById('namespace').value.trim(),
+                recipeId: document.getElementById('recipeId').value.trim(),
+                inputItem: document.getElementById('inputItem').value.trim(),
+                outputItem: document.getElementById('outputItem').value.trim(),
+                experience: document.getElementById('experience').value,
+                cookingTime: document.getElementById('cookingTime').value,
+                furnace: document.getElementById('furnace').checked,
+                smoker: document.getElementById('smoker').checked,
+                blastFurnace: document.getElementById('blastFurnace').checked
+            };
+            
+            addRecipe(data);
+            
+            // Reset form except namespace
+            document.getElementById('recipeId').value = '';
+            document.getElementById('inputItem').value = '';
+            document.getElementById('outputItem').value = '';
+            document.getElementById('experience').value = '0.1';
+            document.getElementById('cookingTime').value = '200';
+            document.getElementById('furnace').checked = true;
+            document.getElementById('smoker').checked = false;
+            document.getElementById('blastFurnace').checked = false;
+            
+            updatePreview();
+        });
+
+        // Live preview update
+        document.querySelectorAll('input, select').forEach(element => {
+            element.addEventListener('input', updatePreview);
+            element.addEventListener('change', updatePreview);
+        });
+
+        // Initial preview update
+        updatePreview();
+    </script>
+    <script src="script.js"></script>
+</body>
+</html>

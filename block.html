@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minecraft ブロック定義ジェネレーター</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            backdrop-filter: blur(10px);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 1.1em;
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e6ed;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.9);
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            transform: translateY(-2px);
+        }
+        
+        .id-input {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .namespace {
+            background: #667eea;
+            color: white;
+            padding: 12px 15px;
+            border-radius: 10px;
+            font-weight: 600;
+            min-width: 120px;
+            text-align: center;
+        }
+        
+        .separator {
+            font-size: 20px;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        button {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 20px;
+        }
+        
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+        
+        .preview {
+            background: #1e1e1e;
+            color: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            line-height: 1.5;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+            margin: 0;
+        }
+        
+        .error {
+            color: #e74c3c;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+        
+        .success {
+            background: #2ecc71;
+            color: white;
+            padding: 10px;
+            border-radius: 10px;
+            margin-top: 10px;
+            text-align: center;
+        }
+    </style>
+    <link rel="stylesheet" href="minecraft-nav.css">
+</head>
+<body>
+    <nav class="minecraft-nav">
+    <div class="nav-header">
+        <h2 class="nav-title">
+            <span class="nav-icon">⚒️</span>
+            Minecraft アドオン ジェネレーター
+        </h2>
+    </div>
+    <ul class="nav-links">
+        <li>
+            <a href="recipe-generator.html" class="nav-link" data-page="recipe">
+                <span class="nav-icon">📝</span>
+                レシピ生成機
+            </a>
+        </li>
+        <li>
+            <a href="item-generator.html" class="nav-link" data-page="item">
+                <span class="nav-icon">💎</span>
+                アイテム定義生成機
+            </a>
+        </li>
+        <li>
+            <a href="block-generator.html" class="nav-link" data-page="block">
+                <span class="nav-icon">🧱</span>
+                ブロック定義生成機
+            </a>
+        </li>
+        <li>
+            <a href="furnace-generator.html" class="nav-link" data-page="furnace">
+                <span class="nav-icon">🔥</span>
+                かまどレシピ生成機
+            </a>
+        </li>
+    </ul>
+</nav>
+    <div class="container">
+        <h1>🧱 Minecraft ブロック定義ジェネレーター</h1>
+        
+        <form id="blockForm">
+            <div class="form-group">
+                <label for="namespace">名前空間 *</label>
+                <input type="text" id="namespace" required placeholder="例: mymod" pattern="[a-z_][a-z0-9_]*">
+                <div class="error" id="namespaceError"></div>
+            </div>
+            
+            <div class="form-group">
+                <label for="blockId">ブロックID *</label>
+                <div class="id-input">
+                    <span class="namespace" id="namespaceDisplay">mymod</span>
+                    <span class="separator">:</span>
+                    <input type="text" id="blockId" required placeholder="例: custom_stone" pattern="[a-z_][a-z0-9_]*">
+                </div>
+                <div class="error" id="blockIdError"></div>
+            </div>
+            
+            <div class="grid-2">
+                <div class="form-group">
+                    <label for="hardness">硬度</label>
+                    <input type="number" id="hardness" step="0.1" min="0" value="1.5">
+                </div>
+                
+                <div class="form-group">
+                    <label for="resistance">爆発耐性</label>
+                    <input type="number" id="resistance" step="0.1" min="0" value="6.0">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="material">マテリアル</label>
+                <select id="material">
+                    <option value="stone">Stone</option>
+                    <option value="wood">Wood</option>
+                    <option value="metal">Metal</option>
+                    <option value="glass">Glass</option>
+                    <option value="dirt">Dirt</option>
+                    <option value="sand">Sand</option>
+                    <option value="wool">Wool</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>ブロックの特性</label>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="flammable">
+                    <label for="flammable">燃えやすい</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="transparent">
+                    <label for="transparent">透明</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="solid" checked>
+                    <label for="solid">固体</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="breakable" checked>
+                    <label for="breakable">破壊可能</label>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="mapColor">マップ色</label>
+                <select id="mapColor">
+                    <option value="stone">Stone (灰色)</option>
+                    <option value="dirt">Dirt (茶色)</option>
+                    <option value="wood">Wood (薄茶色)</option>
+                    <option value="grass">Grass (緑色)</option>
+                    <option value="metal">Metal (白色)</option>
+                    <option value="water">Water (青色)</option>
+                    <option value="fire">Fire (赤色)</option>
+                    <option value="ice">Ice (薄青色)</option>
+                    <option value="sand">Sand (黄色)</option>
+                    <option value="wool">Wool (白色)</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="lightLevel">発光レベル (0-15)</label>
+                <input type="range" id="lightLevel" min="0" max="15" value="0">
+                <div style="text-align: center; margin-top: 5px;">
+                    <span id="lightLevelValue">0</span>
+                </div>
+            </div>
+            
+            <button type="submit">ブロック定義を生成 & ダウンロード</button>
+        </form>
+        
+        <div id="preview" class="preview" style="display: none;"></div>
+        <div id="success" class="success" style="display: none;"></div>
+    </div>
+
+    <script>
+        const form = document.getElementById('blockForm');
+        const namespaceInput = document.getElementById('namespace');
+        const blockIdInput = document.getElementById('blockId');
+        const namespaceDisplay = document.getElementById('namespaceDisplay');
+        const lightLevelSlider = document.getElementById('lightLevel');
+        const lightLevelValue = document.getElementById('lightLevelValue');
+        const preview = document.getElementById('preview');
+        const success = document.getElementById('success');
+
+        // 名前空間の表示を更新
+        namespaceInput.addEventListener('input', function() {
+            const value = this.value || 'mymod';
+            namespaceDisplay.textContent = value;
+            validateInput(this, 'namespaceError', '名前空間は小文字、数字、アンダースコアのみ使用可能です');
+        });
+
+        // ブロックIDの検証
+        blockIdInput.addEventListener('input', function() {
+            validateInput(this, 'blockIdError', 'ブロックIDは小文字、数字、アンダースコアのみ使用可能です');
+        });
+
+        // 発光レベルの値表示
+        lightLevelSlider.addEventListener('input', function() {
+            lightLevelValue.textContent = this.value;
+        });
+
+        function validateInput(input, errorId, message) {
+            const errorDiv = document.getElementById(errorId);
+            const pattern = /^[a-z_][a-z0-9_]*$/;
+            
+            if (input.value && !pattern.test(input.value)) {
+                errorDiv.textContent = message;
+                input.style.borderColor = '#e74c3c';
+                return false;
+            } else {
+                errorDiv.textContent = '';
+                input.style.borderColor = '#e0e6ed';
+                return true;
+            }
+        }
+
+        function generateBlockDefinition() {
+            const namespace = namespaceInput.value;
+            const blockId = blockIdInput.value;
+            const hardness = parseFloat(document.getElementById('hardness').value) || 1.5;
+            const resistance = parseFloat(document.getElementById('resistance').value) || 6.0;
+            const material = document.getElementById('material').value;
+            const flammable = document.getElementById('flammable').checked;
+            const transparent = document.getElementById('transparent').checked;
+            const solid = document.getElementById('solid').checked;
+            const breakable = document.getElementById('breakable').checked;
+            const mapColor = document.getElementById('mapColor').value;
+            const lightLevel = parseInt(document.getElementById('lightLevel').value);
+
+            const blockDefinition = {
+                "format_version": "1.20.10",
+                "minecraft:block": {
+                    "description": {
+                        "identifier": `${namespace}:${blockId}`,
+                        "menu_category": {
+                            "category": "construction"
+                        }
+                    },
+                    "components": {
+                        "minecraft:destructible_by_mining": {
+                            "seconds_to_destroy": hardness
+                        },
+                        "minecraft:destructible_by_explosion": {
+                            "explosion_resistance": resistance
+                        },
+                        "minecraft:material_instances": {
+                            "*": {
+                                "texture": blockId,
+                                "render_method": transparent ? "alpha_test" : "opaque"
+                            }
+                        },
+                        "minecraft:geometry": "geometry.cube",
+                        "minecraft:collision_box": solid,
+                        "minecraft:selection_box": solid
+                    }
+                }
+            };
+
+            // 条件付きコンポーネントの追加
+            if (lightLevel > 0) {
+                blockDefinition["minecraft:block"].components["minecraft:light_emission"] = lightLevel;
+            }
+
+            if (flammable) {
+                blockDefinition["minecraft:block"].components["minecraft:flammable"] = {
+                    "flame_odds": 60,
+                    "burn_odds": 20
+                };
+            }
+
+            if (mapColor !== 'stone') {
+                blockDefinition["minecraft:block"].components["minecraft:map_color"] = mapColor;
+            }
+
+            if (!breakable) {
+                delete blockDefinition["minecraft:block"].components["minecraft:destructible_by_mining"];
+                blockDefinition["minecraft:block"].components["minecraft:breakonpush"] = false;
+            }
+
+            return blockDefinition;
+        }
+
+        function downloadFile(content, filename) {
+            const blob = new Blob([content], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            // バリデーション
+            const namespaceValid = validateInput(namespaceInput, 'namespaceError', '名前空間は小文字、数字、アンダースコアのみ使用可能です');
+            const blockIdValid = validateInput(blockIdInput, 'blockIdError', 'ブロックIDは小文字、数字、アンダースコアのみ使用可能です');
+
+            if (!namespaceValid || !blockIdValid || !namespaceInput.value || !blockIdInput.value) {
+                return;
+            }
+
+            const blockDefinition = generateBlockDefinition();
+            const jsonContent = JSON.stringify(blockDefinition, null, 2);
+            const filename = `${blockIdInput.value}.json`;
+
+            // プレビュー表示
+            preview.textContent = jsonContent;
+            preview.style.display = 'block';
+
+            // ファイルダウンロード
+            downloadFile(jsonContent, filename);
+
+            // 成功メッセージ
+            success.textContent = `✅ ${filename} がダウンロードされました！`;
+            success.style.display = 'block';
+
+            setTimeout(() => {
+                success.style.display = 'none';
+            }, 3000);
+        });
+    </script>
+    <script src="script.js"></script>
+</body>
+</html>
