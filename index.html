@@ -649,11 +649,14 @@
             }
             
             const recipeId = document.getElementById('recipeId').value || 'custom_recipe';
+            // 名前空間を除いたIDを取得
+            const fileName = recipeId.includes(':') ? recipeId.split(':')[1] : recipeId;
+            
             const blob = new Blob([output.textContent], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `${recipeId}.json`;
+            a.download = `${fileName}.json`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
